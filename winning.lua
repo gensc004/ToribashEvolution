@@ -1,10 +1,16 @@
+require "io"
 local maxSteps = 50
 local game_length = 500
 local start = true
 local population = {}
-local population_size = 10
+local scoredPopulation = {}
+local population_size = 3
 local generations_evaluated = 0
 local max_generations = 1
+local replay_move = 1
+local bestGame = {}
+local replay_steps = 0
+replay = false
 -- index representing where we are in the population
 local current_move_set = 1
 
@@ -38,72 +44,116 @@ end
 -- joint values: 1 and 2 are extending or contracting, 3 is holding, 4 is relaxing
 
 function enter_frame()
-	echo("entered frame " .. current_move_set .. " " .. current_move .. " " .. current_move_steps .. " " .. generations_evaluated)
-    --echo("Winning: ^06" .. winning())
-    if current_move_steps == population[current_move_set][current_move].steps then
-    	--echo("move steps")
-    	if current_move < #population[current_move_set] then
-    		current_move = current_move + 1
-    	end
-    	current_move_steps = 0
-    end
+	if replay==false then
+		echo("entered frame " .. current_move_set .. " " .. current_move .. " " .. current_move_steps .. " " .. generations_evaluated)
+	    --echo("Winning: ^06" .. winning())
+	    if current_move_steps == population[current_move_set][current_move].steps then
+	    	--echo("move steps")
+	    	if current_move < #population[current_move_set] then
+	    		current_move = current_move + 1
+	    	end
+	    	current_move_steps = 0
+	    end
 
-    -- if current_move > #population[current_move_set][current_move] then
-    -- 	--calculate the score of the move_set
-    -- 	--echo("move " .. current_move)
-    -- 	current_move_set = current_move_set + 1
+	    -- if current_move > #population[current_move_set][current_move] then
+	    -- 	--calculate the score of the move_set
+	    -- 	--echo("move " .. current_move)
+	    -- 	current_move_set = current_move_set + 1
 
-    -- 	current_move = 1
-    -- 	current_move_steps = 0
-    -- end
-    echo(#population)
+	    -- 	current_move = 1
+	    -- 	current_move_steps = 0
+	    -- end
+	    echo(#population)
+	    
+	    if current_move == 1 then
+	    	population[current_move_set][current_move].score = get_player_info(1).injury
+	    	population[current_move_set][current_move].injury = get_player_info(0).injury
+	    else 
+	    	population[current_move_set][current_move].totalScore = get_player_info(1).injury - get_player_info(0).injury
+	    	population[current_move_set][current_move].score = (get_player_info(1).injury - population[current_move_set][current_move].score)
+	    	population[current_move_set][current_move].injury = (get_player_info(0).injury - population[current_move_set][current_move].injury)
+	    end
+	    
+	    -- Change joints and step the game
+	    setJoints(0,population[current_move_set][current_move].move)
+	    current_move_steps = current_move_steps + 1
+
+	    step_game()
+
     
-    if current_move == 1 then
-    	population[current_move_set][current_move].score = get_player_info(1).injury
-    	population[current_move_set][current_move].injury = get_player_info(0).injury
+    	--echo("blah " .. get_body_info(1, 0).pos)
     else 
-    	population[current_move_set][current_move].score = (get_player_info(1).injury - population[current_move_set][current_move].score)
-    	population[current_move_set][current_move].score = (get_player_info(0).injury - population[current_move_set][current_move].injury)
-    end
-    
-    -- Change joints and step the game
-    setJoints(0,population[current_move_set][current_move].move)
-    current_move_steps = current_move_steps + 1
+		if replay_steps == bestGame.move_set[replay_move].steps then
+	    	if replay_move < #population[current_move_set] then
+	    		echo(bestGame.move_set[replay_move])
+	    		replay_move = replay_move + 1
+	    	end
+	    	replay_steps = 0
+	    end
 
-    step_game()
+		if replay_move <= #bestGame.move_set then
+			setJoints(0,bestGame.move_set[replay_move].move)
+			replay_steps = replay_steps + 1
+			step_game()
+		else 
+			--evolutionEnd()
+		end
+	end
+end
 
-    
-    --echo("blah " .. get_body_info(1, 0).pos)
+function evaluatePopulation()
+	for i=1, #population do
+		scoredPopulation[i] = {score = population[i][#population[i]].totalScore, move_set = population[i]}
+	end
+
+	bestGame = scoredPopulation[1]
+	for i=2,#scoredPopulation do
+		if bestGame.score < scoredPopulation[i].score then
+			bestGame = scoredPopulation[i]
+		end
+	end
+
+	echo("BEst score "..bestGame.score)
+	replay = true
+	start_new_game()
+	step_game()
+	--replayBestGame(bestGame)
+
 end
 
 function endGame()
-	--check scores
-	--run all children in generation
-	--after that mutate and run again
-	--repeat some set number of times
-	if current_move_set >= #population then
-    	--mutate and restart
-    	echo("move_set " .. current_move_set)
-    	current_move_set = 1
-    	current_move = 1
-    	current_move_steps = 0
-
-    	generations_evaluated = generations_evaluated + 1
-    	--make generation based on the old generation
-    end
-	if get_world_state().match_frame == game_length then
-		if generations_evaluated == max_generations then
-    		evolutionEnd()
-    	else
-			--change move set
-			current_move_set = current_move_set + 1
+	if replay==false then
+		--check scores
+		--run all children in generation
+		--after that mutate and run again
+		--repeat some set number of times
+		if current_move_set >= #population then
+	    	--mutate and restart
+	    	echo("move_set " .. current_move_set)
+	    	current_move_set = 1
 	    	current_move = 1
 	    	current_move_steps = 0
 
-	    	--start new game
-			--echo(current_move_set)
-			start_new_game()
-			step_game()
+	    	generations_evaluated = generations_evaluated + 1
+	    	evaluatePopulation()
+	    	echo("Evaluated population")
+	    end
+	    if replay==false then
+			if get_world_state().match_frame == game_length then
+				if generations_evaluated == max_generations then
+		    		evolutionEnd()
+		    	else
+					--change move set
+					current_move_set = current_move_set + 1
+			    	current_move = 1
+			    	current_move_steps = 0
+
+			    	--start new game
+					--echo(current_move_set)
+					start_new_game()
+					step_game()
+				end
+			end
 		end
 	end
 end
@@ -147,5 +197,6 @@ run_cmd("set tf 10")
 
 add_hook("enter_freeze","echowinner",enter_frame)
 add_hook("end_game", "end game", endGame)
+--add_hook("replay_best_game", "replay best", replayBestGame)
 
 initializeEvolution()
