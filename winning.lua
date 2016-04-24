@@ -1,4 +1,4 @@
-require "io"
+
 local maxSteps = 50
 local game_length = 500
 local start = true
@@ -164,7 +164,7 @@ function initializeEvolution()
 
 	population = {}
 	move1 = {}
-
+	
 	for i=1,population_size do
 		population[i] = {}
 	    for j=1,math.random(20) do
@@ -179,6 +179,27 @@ function initializeEvolution()
 	step_game()
 end
 
+local function WritePopulationFile()
+	local file = io.open("population.txt", "w",1)
+	for i=1,population_size do
+		for j=1, #population[i] do
+			file:write("[")
+			for k=1, #population[i][j].move - 1 do
+				file:write(population[i][j].move[k])
+				file:write(", ")
+			end
+			file:write(population[i][j].move[#population[i][j].move])
+			file:write("] \n Score: ")
+			file:write(population[i][j].score)
+			file:write("\n Injury: ")
+			file:write(population[i][j].injury)
+			file:write("\n")
+		end
+		file:write("\n")
+	end
+	io.close(file)
+end
+
 function evolutionEnd()
 	-- do some final selection and shit
 	local current_move_set = 1
@@ -189,8 +210,14 @@ function evolutionEnd()
 	-- index representing how many steps we have been on this move for
 	local current_move_steps = 0
 	local generations_evaluated = 0
-	echo("We did it!")
+	
+	-- save final population to file
+	WritePopulationFile()
+	
+
 end
+
+
 
 set_option("fixedframerate", 0)
 run_cmd("set tf 10")
