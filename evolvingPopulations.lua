@@ -117,23 +117,60 @@ function crossover(i1, i2)
 	end
 end
 
+function tweak(move)
+	for i = 1, 20 do
+		rand = math.random()
+		if rand <= 0.25 then
+			move.move[i] = math.random(4)
+		end
+	end
+	return move
+end
+
+function mutateAnswer(answer, maxChange)
+	num = math.random(maxChange) - 1
+	for i = 1, num do
+		index = math.random(#answer)
+		answer[index] = tweak(answer[index])
+	end
+	return answer
+end
+
+function ourCopy(obj)
+	newArr = {}
+	for i=1, #obj do 
+		newMove = {}
+		newMoveArr = {}
+		for j=1, #obj[i].move do
+			newMoveArr[j] = obj[i].move[j]
+		end
+		newMove.move = newMoveArr
+		newMove.steps = obj[i].steps
+		newMove.score = obj[i].score
+		newArr[i] = newMove
+	end
+	return newArr
+end
+
 function crossoverParents()
 	echo("crossover")
 	for i=1,(population_size / 2) do
 		--echo(i)
-		parent1 = parents[math.random(#parents)].moveSet
-		parent2 = parents[math.random(#parents)].moveSet
+		parent1 = ourCopy(parents[math.random(#parents)].moveSet)
+		parent2 = ourCopy(parents[math.random(#parents)].moveSet)
 		-- swap moves
 		crossover(math.random(#parent1), math.random(#parent1))
 		--maybe mutate
-		table.insert(population, {})
-		for i=1,#parent1 do
-			table.insert(population[#population],parent1[1])
-		end
-		table.insert(population, {})
-		for i=1,#parent2 do
-			table.insert(population[#population],parent2[1])
-		end
+		table.insert(population, parent1)
+		-- for i=1,#parent1 do
+		-- 	table.insert(population[#population],parent1[i])
+		-- end
+		population[#population] = mutateAnswer(population[#population], 6)
+		table.insert(population, parent2)
+		-- for i=1,#parent2 do
+		-- 	table.insert(population[#population],parent2[i])
+		-- end
+		population[#population] = mutateAnswer(population[#population], 6)
 	end
 	-- echo(#population)
 	for i=1, #population do
@@ -222,7 +259,7 @@ function createRandomPopulation()
 	for i=1,population_size do
 		population[i] = {}
 	    for j=1,math.random(20) do
-	    	population[i][j] = {move = {}, steps = math.random(4), score = 0, injury = 0}
+	    	population[i][j] = {move = {}, steps = math.random(4), score = 0}
 	    	for k=1,20 do
 	    		population[i][j].move[k] = math.random(4)
 	    	end
