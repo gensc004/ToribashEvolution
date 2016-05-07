@@ -12,8 +12,8 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 2
-local numGenerations = 1
+local population_size = 50
+local numGenerations = 10
 local generationNum = 0
 local generations_evaluated = 0
 local max_generations = 1
@@ -364,12 +364,16 @@ function endGame()
 		-- the game ended and we want to move ahead in the world
 
 		chromosome = {}
+		lastScore = 0;
+		lastInjury = 0;
 		start_new_game()
 		evaluatePopulation()
 	else
 		-- echo("we done")
 
 		-- Score the population
+		lastScore = 0;
+		lastInjury = 0;
 		scorePopulation()
 		-- -- echo("finished scored population")
 

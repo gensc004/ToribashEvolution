@@ -12,8 +12,8 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 1
-local numGenerations = 1
+local population_size = 50
+local numGenerations = 10
 local generationNum = 0
 local generations_evaluated = 0
 local max_generations = 1
