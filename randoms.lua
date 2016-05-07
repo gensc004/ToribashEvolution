@@ -12,8 +12,8 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 50
-local numGenerations = 10
+local population_size = 1
+local numGenerations = 1
 local generationNum = 0
 local generations_evaluated = 0
 local max_generations = 1
@@ -33,24 +33,65 @@ local current_move = 1
 -- index representing how many steps we have been on this move for
 local current_move_steps = 0
 
-local function WritePopulationFile()
-	local file = io.open("population.txt", "w",1)
+local function writePopulationtoFile()
+	--echo("writing")
+	local file = io.open("randomPopulation.txt", "w",1)
 	for i=1,population_size do
-		for j=1, #population[i] do
-			file:write("[")
-			for k=1, #population[i][j].move - 1 do
-				file:write(population[i][j].move[k])
-				file:write(", ")
-			end
-			file:write(population[i][j].move[#population[i][j].move])
-			file:write("] \n Score: ")
-			file:write(population[i][j].score)
-			file:write("\n Injury: ")
-			file:write(population[i][j].injury)
+		file:write("moveSet\n")
+		for j=1, #evaluatedPopulation[i].moveSet do
+			file:write("Steps:" .. evaluatedPopulation[i].moveSet[j].steps)
 			file:write("\n")
+			for k=1, #evaluatedPopulation[i].moveSet[j].move do
+				file:write(evaluatedPopulation[i].moveSet[j].move[k])
+				file:write("\n")
+			end
 		end
 		file:write("\n")
 	end
+	io.close(file)
+end
+
+function getAverageScore()
+	total = 0
+	for i=1, #evaluatedPopulation do
+		total = total + evaluatedPopulation[i].finalScore
+	end
+	return total / #evaluatedPopulation
+end
+
+local function writeScoretoFile()
+	local file = io.open("randomScore.txt", "a",1)
+	--echo("Average: "..getAverageScore())
+	file:write(""..getAverageScore())
+	file:write("\n")
+	io.close(file)
+end
+
+local function fillPopulation(filename)
+	local file = io.open(filename, "r",1)
+	population = {}
+	i = 0;
+	j = 0;
+	k = 1;
+	for line in file:lines() do
+		if string.find(line, "moveSet") then
+			j = 1;
+			k = 1;
+			i = i + 1;
+			population[i] = {}
+			population[i][j] = {move = {}, steps = 0, score = 0}
+		elseif string.find(line,"Steps:") then
+			k = 1;
+			population[i][j].steps = string.find(line,"%d+")
+			j = j + 1;
+			population[i][j] = {move = {}, steps = 0, score = 0}
+		elseif string.find(line, "%d") then
+			population[i][j].move[k] = string.find(line,"%d")
+			-- --echo(population[i][j].move[k])
+			k = k + 1;
+		end
+	end
+	-- -- --echo("size" .. #population)
 	io.close(file)
 end
 
@@ -88,10 +129,10 @@ end
 
 function tournamentSelection() 
 	parents = {}
-	echo("selecting")
+	--echo("selecting")
 
 	for i=1, (math.random(maxNumOfParents) + 1) do
-		--echo(i)
+		----echo(i)
 		table.insert(parents, getBest(randomSubset()))
 	end
 
@@ -151,9 +192,9 @@ function ourCopy(obj)
 end
 
 function crossoverParents()
-	echo("crossover")
+	--echo("crossover")
 	for i=1,(population_size / 2) do
-		--echo(i)
+		----echo(i)
 		parent1 = ourCopy(parents[math.random(#parents)].moveSet)
 		parent2 = ourCopy(parents[math.random(#parents)].moveSet)
 		-- swap moves
@@ -170,15 +211,15 @@ function crossoverParents()
 		-- end
 		population[#population] = mutateAnswer(population[#population], 6)
 	end
-	-- echo(#population)
+	-- --echo(#population)
 	for i=1, #population do
-		echo(#population[i])
+		--echo(#population[i])
 	end
 end
 
 
 function evolvePopulation() 
-	echo("Evolving")
+	--echo("Evolving")
 	-- Select some number of parents from the population
 	tournamentSelection()
 	-- Crossover sections of the parents with two point crossover
@@ -195,11 +236,11 @@ end
 
 function evaluateChromosome()
 
-	-- echo("Evaluate chromosome")
+	-- --echo("Evaluate chromosome")
 	-- get next move from the set (remove(table, 1) takes from the front)
-	echo(#chromosome)
+	--echo(#chromosome)
 	currentMove = table.remove(chromosome, 1)
-	echo("Set joints")
+	--echo("Set joints")
 	-- set the joints
 	setJoints(0,currentMove.move)
 
@@ -210,33 +251,33 @@ function evaluateChromosome()
 
 	-- Run the frameLength number of frames * the number of steps
 	if #chromosome == 0 then
-		echo("finish round")
-		echo(#population)
+		--echo("finish round")
+		--echo(#population)
 		run_frames(game_length - get_world_state().match_frame)
 	else
-		-- echo("move")
+		-- --echo("move")
 		run_frames(frameLength * currentMove.steps)
 	end
 end
 
 -- this is called whenever the frames move forward
 function evaluatePopulation()
-	--echo("Evaluate population")
+	----echo("Evaluate population")
 	-- if we have used all the moves in a move set
 	if #chromosome == 0 then
-		echo("Evaluating: "..#population)
+		--echo("Evaluating: "..#population)
 		-- Ensures that the last move is scored properly
 		-- if #evaluatedPopulation ~= 0 then
 		-- 	evaluatedPopulation[#evaluatedPopulation][#evaluatedPopulation[#evaluatedPopulation]].score = get_player_info(1).injury
 		-- end
 		-- Set the next moveSet in the population to chromosome and evaluate the first move in it
 		if #population ~= 0 then
-			echo("Evaluating cont: "..#population)
-			echo(#population[1])
+			--echo("Evaluating cont: "..#population)
+			--echo(#population[1])
 			chromosome = table.remove(population, 1)
-			echo(#chromosome)
-			echo(chromosome)
-			echo(#population)
+			--echo(#chromosome)
+			--echo(chromosome)
+			--echo(#population)
 
 			table.insert(evaluatedPopulation, {})
 			evaluateChromosome()
@@ -267,9 +308,11 @@ function initializeEvolution()
 	--create a population and start the game
 	--example move-set {{move = {}, steps = 1, score = 0}}
 	population = createRandomPopulation()
+	evaluatedPopulation = {}
+	--fillPopulation("population.txt")
 	--free_play()
 	start_new_game()
-	echo("new game started")
+	--echo("new game started")
 	evaluatePopulation()
 end
 
@@ -286,6 +329,7 @@ function getFinalScore(pop)
 end
 
 function scorePopulation()
+	--echo("THE FUCK:"..#evaluatedPopulation)
 	for i=1,#evaluatedPopulation do
 		-- Set the final score to the max of the moves
 		evaluatedPopulation[i] = {moveSet = evaluatedPopulation[i], finalScore = getFinalScore(evaluatedPopulation[i])}
@@ -296,6 +340,7 @@ function scorePopulation()
 			end
 		end
 	end
+	--echo("THE FUCK")
 end
 
 function replayBest()
@@ -307,9 +352,9 @@ function replayBest()
 		end
 	end
 	table.insert(population, best.moveSet)
-	--echo("BLAH: "..#population)
+	----echo("BLAH: "..#population)
 	start_new_game()
-	--echo("new game started")
+	----echo("new game started")
 	evaluatePopulation()
 end
 
@@ -323,19 +368,24 @@ function endGame()
 		start_new_game()
 		evaluatePopulation()
 	else
-		echo("we done")
+		echo("we doneski")
 
 		-- Score the population
 		scorePopulation()
-		--echo("finished scored population")
+		echo("we doneski234")
+		----echo("finished scored population")
 
 		-- replays the best move set in a generation
 		--replayBest()
 
 		-- Evolve the population
 		if generationNum == numGenerations then
+			echo("sup")
+			writeScoretoFile()
+			writePopulationtoFile()
 			replayBest()
 		else
+			echo("super")
 			generationNum = generationNum + 1
 			initializeEvolution()
 		end
@@ -343,13 +393,13 @@ function endGame()
 end
 
 function evolutionEnd()
-	echo("We did it!")
+	--echo("We did it!")
 end
 
 set_option("fixedframerate", 0)
 run_cmd("set tf 10")
 
-add_hook("enter_freeze","echowinner", evaluatePopulation)
+add_hook("enter_freeze","--echowinner", evaluatePopulation)
 add_hook("end_game", "end game", endGame)
 --add_hook("replay_best_game", "replay best", replayBestGame)
 
