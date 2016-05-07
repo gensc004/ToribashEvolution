@@ -1,8 +1,4 @@
 
-require "io"
-
-
-
 -- Population objects for evolution
 local evaluatedPopulation = {}
 local population = {}
@@ -16,7 +12,9 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 4
+local population_size = 50
+local numGenerations = 10
+local generationNum = 0
 local generations_evaluated = 0
 local max_generations = 1
 local maxSteps = 50
@@ -178,9 +176,6 @@ function crossoverParents()
 	end
 end
 
-function createNewGeneration()
-
-end
 
 function evolvePopulation() 
 	echo("Evolving")
@@ -338,7 +333,12 @@ function endGame()
 		--replayBest()
 
 		-- Evolve the population
-		evolvePopulation()
+		if generationNum == numGenerations then
+			replayBest()
+		else
+			generationNum = generationNum + 1
+			evolvePopulation()
+		end
 	end
 end
 
