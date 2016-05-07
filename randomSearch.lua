@@ -74,19 +74,19 @@ local function fillPopulation(filename)
 	j = 0;
 	k = 1;
 	for line in file:lines() do
-		if string.find(line, "moveSet") then
+		if string.match(line, "moveSet") then
 			j = 1;
 			k = 1;
 			i = i + 1;
 			population[i] = {}
 			population[i][j] = {move = {}, steps = 0, score = 0}
-		elseif string.find(line,"Steps:") then
+		elseif string.match(line,"Steps:") then
 			k = 1;
-			population[i][j].steps = string.find(line,"%d+")
+			population[i][j].steps = string.match(line,"%d+")
 			j = j + 1;
 			population[i][j] = {move = {}, steps = 0, score = 0}
-		elseif string.find(line, "%d") then
-			population[i][j].move[k] = string.find(line,"%d")
+		elseif string.match(line, "%d") then
+			population[i][j].move[k] = string.match(line,"%d")
 			-- --echo(population[i][j].move[k])
 			k = k + 1;
 		end
