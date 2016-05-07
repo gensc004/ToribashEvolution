@@ -12,8 +12,8 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 2
-local numGenerations = 1
+local population_size = 50
+local numGenerations = 10
 local generationNum = 0
 local generations_evaluated = 0
 local max_generations = 1
@@ -33,63 +33,31 @@ local current_move = 1
 -- index representing how many steps we have been on this move for
 local current_move_steps = 0
 
-local function writePopulationtoFile()
+local function WritePopulationFile()
 	local file = io.open("population.txt", "w",1)
 	for i=1,population_size do
-		file:write("moveSet\n")
-		for j=1, #evaluatedPopulation[i].moveSet do
-			file:write("Steps:" .. evaluatedPopulation[i].moveSet[j].steps)
-			for k=1, #evaluatedPopulation[i].moveSet[j].move do
-				file:write(evaluatedPopulation[i].moveSet[j].move[k])
-				file:write("\n")
+		for j=1, #population[i] do
+			file:write("[")
+			for k=1, #population[i][j].move - 1 do
+				file:write(population[i][j].move[k])
+				file:write(", ")
 			end
+			file:write(population[i][j].move[#population[i][j].move])
+			file:write("] \n Score: ")
+			file:write(population[i][j].score)
+			file:write("\n Injury: ")
+			file:write(population[i][j].injury)
+			file:write("\n")
 		end
 		file:write("\n")
 	end
 	io.close(file)
 end
 
-local function fillPopulation(filename)
-	local file = io.open(filename, "r",1)
-	population = {}
-	i = 0;
-	j = 0;
-	k = 1;
-	for line in file:lines() do
-		if string.find(line, "moveSet") then
-			j = 1;
-			k = 1;
-			i = i + 1;
-			population[i] = {}
-			population[i][j] = {move = {}, steps = 0, score = 0}
-		elseif string.find(line,"Steps:") then
-			k = 1;
-			population[i][j].steps = string.find(line,"%d+")
-			j = j + 1;
-			population[i][j] = {move = {}, steps = 0, score = 0}
-		elseif string.find(line, "%d") then
-			population[i][j].move[k] = string.find(line,"%d")
-			echo(population[i][j].move[k])
-			k = k + 1;
-		end
-	end
-	echo("size" .. #population)
-	io.close(file)
-end
-
-
 local function setJoints(player, js) 
 	for i = 1, #js do
 		set_joint_state(player, i-1, js[i])
 	end
-end
-
-function getAverageScore()
-	total = 0
-	for i=0, #evaluatedPopulation do
-		total += evaluatedPopulation[i].finalScore
-	end
-	return total / #evaluatedPopulation
 end
 
 function getBest(li)
@@ -299,7 +267,6 @@ function initializeEvolution()
 	--create a population and start the game
 	--example move-set {{move = {}, steps = 1, score = 0}}
 	population = createRandomPopulation()
-	--fillPopulation("population.txt")
 	--free_play()
 	start_new_game()
 	echo("new game started")
@@ -367,11 +334,9 @@ function endGame()
 
 		-- Evolve the population
 		if generationNum == numGenerations then
-			writePopulationtoFile()
 			replayBest()
 		else
 			generationNum = generationNum + 1
-			evolvePopulation()
 		end
 	end
 end
@@ -380,7 +345,7 @@ function evolutionEnd()
 	echo("We did it!")
 end
 
-set_option("fixedframerate", 0)
+set_option("fixedframerate", -10)
 run_cmd("set tf 10")
 
 add_hook("enter_freeze","echowinner", evaluatePopulation)

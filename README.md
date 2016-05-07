@@ -5,6 +5,7 @@ To test the script move it into the folder
 
 
 Mac:  ~/Library/Application Support/Steam/steamapps/common/Toribash/data/script/
+or ~/Library/Application\ Support/Steam/SteamApps/common/Toribash/data/script/
 
 
 Windows: ?

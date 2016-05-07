@@ -140,16 +140,36 @@ function replayBest()
 	evaluatePopulation()
 end
 
+local function WritePopulationFile()
+	local file = io.open("population.txt", "w",1)
+	for i=1,population_size do
+		for j=1, #evaluatedPopulation[i].moveSet do
+			file:write("[")
+			for k=1, #evaluatedPopulation[i].moveSet[j].move - 1 do
+				file:write(evaluatedPopulation[i].moveSet[j].move[k] .. ", ")
+			end
+			file:write(evaluatedPopulation[i].moveSet[j].move[#evaluatedPopulation[i].moveSet[j].move])
+			file:write("] \n" .. "Score: ")
+			file:write(evaluatedPopulation[i].moveSet[j].score)
+			file:write("\n")
+		end
+		file:write("final score: " .. evaluatedPopulation[i].finalScore .. "\n")
+		file:write("\n")
+	end
+	io.close(file)
+end
+
 -- this function is called when a game ends
 function endGame()
 	-- if the population is empty then we are done! else start a new game!
 	if #population ~= 0 then
 		-- the game ended and we want to move ahead in the world
-
+		evaluatedPopulation[#evaluatedPopulation][#evaluatedPopulation[#evaluatedPopulation]].score = get_player_info(1).injury
 		chromosome = {}
 		start_new_game()
 		evaluatePopulation()
 	else
+		evaluatedPopulation[#evaluatedPopulation][#evaluatedPopulation[#evaluatedPopulation]].score = get_player_info(1).injury
 		echo("we done")
 
 		-- Score the population
@@ -157,10 +177,12 @@ function endGame()
 		--echo("finished scored population")
 
 		-- replays the best move set in a generation
-		replayBest()
+		--replayBest()
 
 		-- Evolve the population
-		evolvePopulation()
+		--evolvePopulation()
+		
+		WritePopulationFile()
 	end
 end
 
