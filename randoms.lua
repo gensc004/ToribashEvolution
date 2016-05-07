@@ -337,6 +337,7 @@ function endGame()
 			replayBest()
 		else
 			generationNum = generationNum + 1
+			initializeEvolution()
 		end
 	end
 end
@@ -345,7 +346,7 @@ function evolutionEnd()
 	echo("We did it!")
 end
 
-set_option("fixedframerate", -10)
+set_option("fixedframerate", 0)
 run_cmd("set tf 10")
 
 add_hook("enter_freeze","echowinner", evaluatePopulation)
