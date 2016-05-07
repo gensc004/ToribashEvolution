@@ -345,7 +345,7 @@ function evolutionEnd()
 	echo("We did it!")
 end
 
-set_option("fixedframerate", 0)
+set_option("fixedframerate", -10)
 run_cmd("set tf 10")
 
 add_hook("enter_freeze","echowinner", evaluatePopulation)
