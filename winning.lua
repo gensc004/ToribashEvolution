@@ -185,13 +185,12 @@ local function WritePopulationFile()
 		for j=1, #population[i] do
 			file:write("[")
 			for k=1, #population[i][j].move - 1 do
-				file:write(population[i][j].move[k])
-				file:write(", ")
+				file:write(population[i][j].move[k] .. ", ")
 			end
 			file:write(population[i][j].move[#population[i][j].move])
-			file:write("] \n Score: ")
+			file:write("] \n" .. "Score: ")
 			file:write(population[i][j].score)
-			file:write("\n Injury: ")
+			file:write("\n" .. "Injury: ")
 			file:write(population[i][j].injury)
 			file:write("\n")
 		end
