@@ -1,7 +1,4 @@
 
-require "io"
-
-
 
 -- Population objects for evolution
 local evaluatedPopulation = {}
@@ -35,25 +32,38 @@ local current_move = 1
 -- index representing how many steps we have been on this move for
 local current_move_steps = 0
 
-local function WritePopulationFile()
+local function writePopulationtoFile()
 	local file = io.open("population.txt", "w",1)
 	for i=1,population_size do
 		for j=1, #population[i] do
-			file:write("[")
 			for k=1, #population[i][j].move - 1 do
 				file:write(population[i][j].move[k])
-				file:write(", ")
+				file:write("\n")
 			end
 			file:write(population[i][j].move[#population[i][j].move])
-			file:write("] \n Score: ")
-			file:write(population[i][j].score)
-			file:write("\n Injury: ")
-			file:write(population[i][j].injury)
 			file:write("\n")
 		end
 		file:write("\n")
 	end
 	io.close(file)
+end
+
+local function fillPopulation(filename)
+	local file = io.open(filename, "r",1)
+	population = {}
+	i = 1;
+	population[i] = {}
+	for line in io.lines(file) do
+		if(string.find(line, "%d")) do
+			
+		end
+	    for j=1,math.random(20) do
+	    	population[i][j] = {move = {}, steps = math.random(4), score = 0}
+	    	for k=1,20 do
+	    		population[i][j].move[k] = math.random(4)
+	    	end
+	    end 
+	end
 end
 
 local function setJoints(player, js) 
@@ -178,9 +188,6 @@ function crossoverParents()
 	end
 end
 
-function createNewGeneration()
-
-end
 
 function evolvePopulation() 
 	echo("Evolving")
