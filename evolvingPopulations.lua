@@ -39,6 +39,7 @@ local function writePopulationtoFile()
 		file:write("moveSet\n")
 		for j=1, #evaluatedPopulation[i].moveSet do
 			file:write("Steps:" .. evaluatedPopulation[i].moveSet[j].steps)
+			file:write("\n")
 			for k=1, #evaluatedPopulation[i].moveSet[j].move do
 				file:write(evaluatedPopulation[i].moveSet[j].move[k])
 				file:write("\n")
@@ -59,7 +60,6 @@ end
 
 local function writeScoretoFile()
 	local file = io.open("averageScore.txt", "a",1)
-	echo("boobies")
 	echo("Average: "..getAverageScore())
 	file:write(""..getAverageScore())
 	file:write("\n")

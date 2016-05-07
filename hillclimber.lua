@@ -10,30 +10,37 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local numGenerations = 10
+local numGenerations = 1
 local generationsEvaluated = 0
 local maxSteps = 50
 local lastInjury = 0
 local lastScore = 0
 
-local function WritePopulationFile()
-	local file = io.open("population.txt", "w",1)
-	for i=1,population_size do
-		for j=1, #population[i] do
-			file:write("[")
-			for k=1, #population[i][j].move - 1 do
-				file:write(population[i][j].move[k])
-				file:write(", ")
-			end
-			file:write(population[i][j].move[#population[i][j].move])
-			file:write("] \n Score: ")
-			file:write(population[i][j].score)
-			file:write("\n Injury: ")
-			file:write(population[i][j].injury)
+
+local function writePopulationtoFile()
+	local file = io.open("hillclimberPopulation.txt", "a",1)
+	file:write("moveSet\n")
+	for i=1, #climber do
+		file:write("Steps:" .. climber[i].steps)
+		file:write("\n")
+		for j=1, #climber[i].move do
+			file:write(climber[i].move[j])
 			file:write("\n")
 		end
-		file:write("\n")
 	end
+	file:write("\n")
+	io.close(file)
+end
+
+function getAverageScore()
+	return climber[#climber].score
+end
+
+local function writeScoretoFile()
+	local file = io.open("hillclimberScore.txt", "a",1)
+	echo("Average: "..getAverageScore())
+	file:write(""..getAverageScore())
+	file:write("\n")
 	io.close(file)
 end
 
@@ -64,13 +71,10 @@ function tweak(move)
 	for i = 1, 20 do
 		rand = math.random()
 		if rand <= 0.25 then
-			blah = true
 			move.move[i] = math.random(4)
 		end
 	end
-	if blah then
-		echo("tweaked")
-	end
+
 	return move
 end
 
@@ -99,7 +103,7 @@ function mutateClimber()
 end
 
 function evaluateClimber()
-
+	climber[climberIndex].score = get_player_info(1).injury 
 	if climberIndex < #climber then
 		setJoints(0,climber[climberIndex].move)
 		run_frames(frameLength * climber[climberIndex].steps)
@@ -118,6 +122,8 @@ function endGame()
 	else
 		climberIndex = 1
 		if generationsEvaluated > 0 then
+			echo(getScore(lastClimber))
+			echo(getScore(climber))
 			if getScore(lastClimber) > getScore(climber) then
 				echo("Keeping lastClimber")
 				climber = ourCopy(lastClimber)
@@ -128,6 +134,8 @@ function endGame()
 		else 
 			lastClimber = ourCopy(climber)
 		end
+		writeScoretoFile()
+		writePopulationtoFile()
 		generationsEvaluated = generationsEvaluated + 1
 		climber = mutateClimber()
 		start_new_game()
