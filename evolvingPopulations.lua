@@ -60,6 +60,14 @@ local function setJoints(player, js)
 	end
 end
 
+function getAverageScore()
+	total = 0
+	for i=0, #evaluatedPopulation do
+		total += evaluatedPopulation[i].finalScore
+	end
+	return total / #evaluatedPopulation
+end
+
 function getBest(li)
 	best = li[1]
 	for i=2,#li do
