@@ -12,9 +12,9 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 1
-local numGenerations = 1
-local generationNum = 0
+local population_size = 50
+local numGenerations = 10
+local generationNum = 1
 local generations_evaluated = 0
 local max_generations = 1
 local maxSteps = 50
@@ -61,7 +61,7 @@ end
 
 local function writeScoretoFile()
 	local file = io.open("randomScore.txt", "a",1)
-	--echo("Average: "..getAverageScore())
+	echo("Average: "..getAverageScore())
 	file:write(""..getAverageScore())
 	file:write("\n")
 	io.close(file)
@@ -365,14 +365,13 @@ function endGame()
 		-- the game ended and we want to move ahead in the world
 
 		chromosome = {}
+		lastScore = 0
+		lastInjury = 0
 		start_new_game()
 		evaluatePopulation()
 	else
-		echo("we doneski")
-
 		-- Score the population
 		scorePopulation()
-		echo("we doneski234")
 		----echo("finished scored population")
 
 		-- replays the best move set in a generation
@@ -380,13 +379,16 @@ function endGame()
 
 		-- Evolve the population
 		if generationNum == numGenerations then
-			echo("sup")
+			echo("lastGen: "..generationNum)
 			writeScoretoFile()
 			writePopulationtoFile()
 			replayBest()
 		else
-			echo("super")
+			echo("generation#: "..generationNum)
+			writeScoretoFile()
 			generationNum = generationNum + 1
+			lastScore = 0
+			lastInjury = 0
 			initializeEvolution()
 		end
 	end
