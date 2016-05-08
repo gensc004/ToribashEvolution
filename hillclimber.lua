@@ -10,11 +10,12 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local numGenerations = 1
-local generationsEvaluated = 0
+local numGenerations = 5
+local generationsEvaluated = 1
 local maxSteps = 50
 local lastInjury = 0
 local lastScore = 0
+local last = true
 
 
 local function writePopulationtoFile()
@@ -38,14 +39,45 @@ end
 
 local function writeScoretoFile()
 	local file = io.open("hillclimberScore.txt", "a",1)
-	echo("Average: "..getAverageScore())
-	file:write(""..getAverageScore())
+	-- echo("Average: "..getAverageScore())
+	file:write(""..getScore(climber))
 	file:write("\n")
 	io.close(file)
 end
 
+local function createClimber(filename)
+	local file = io.open(filename, "r",1)
+	population = {}
+	i = 0;
+	j = 1;
+	k = 1;
+	for line in file:lines() do
+		if string.find(line, "moveSet") ~= nil then
+			j = 1;
+			k = 1;
+			i = i + 1;
+			-- echo("blerb")
+			climber = {}
+			climber[j] = {move = {}, steps = 0, score = 0}
+		elseif string.find(line,"Steps:") ~= nil then
+			--echo(line)
+			--echo(string.sub(line, string.find(line,"%d+"), string.find(line,"%d+")))
+			k = 1;
+			climber[j] = {move = {}, steps = 0, score = 0}
+			climber[j].steps = string.match(line, "%d+")
+			j = j + 1;
+			
+		elseif string.find(line, "%d") ~= nil then
+			climber[j-1].move[k] = string.match(line, "%d")
+			--echo(climber[j].move[k])
+			k = k + 1;
+		end
+	end
+	io.close(file)
+end
+
 function ourCopy(obj)
-	echo("ourCOpy")
+	-- echo("ourCOpy")
 	newArr = {}
 	for i=1, #obj do 
 		newMove = {}
@@ -84,7 +116,7 @@ function mutateAnswer(answer, maxChange)
 		index = math.random(#answer)
 		answer[index] = tweak(answer[index])
 	end
-	echo("Returning "..generationsEvaluated)
+	-- echo("Returning "..generationsEvaluated)
 	return answer
 end
 
@@ -97,13 +129,15 @@ function getScore(cli)
 end
 
 function mutateClimber() 
-	echo("MUTATING")
+	-- echo("MUTATING")
 	climber = mutateAnswer(climber, 6)
 	return climber
 end
 
 function evaluateClimber()
-	climber[climberIndex].score = get_player_info(1).injury 
+	climber[climberIndex].score = (get_player_info(1).injury - lastScore) - (get_player_info(0).injury - lastInjury)
+	lastInjury = get_player_info(0).injury
+	lastScore = get_player_info(1).injury
 	if climberIndex < #climber then
 		setJoints(0,climber[climberIndex].move)
 		run_frames(frameLength * climber[climberIndex].steps)
@@ -116,28 +150,35 @@ function evaluateClimber()
 end
 
 function endGame()
-	if numGenerations == generationsEvaluated then
-		-- replayBest()
-		echo("weDone")
-	else
-		climberIndex = 1
-		if generationsEvaluated > 0 then
-			echo(getScore(lastClimber))
-			echo(getScore(climber))
-			if getScore(lastClimber) > getScore(climber) then
-				echo("Keeping lastClimber")
-				climber = ourCopy(lastClimber)
-			else 
-				echo("keeping climber")
-				lastClimber = ourCopy(climber)
-			end
+	climberIndex = 1
+	if generationsEvaluated > 1 then
+		echo("lastClimber: "..getScore(lastClimber))
+		echo("climber: "..getScore(climber))
+		if getScore(lastClimber) > getScore(climber) then
+			 echo("Keeping lastClimber")
+			climber = ourCopy(lastClimber)
 		else 
+			-- echo("keeping climber")
 			lastClimber = ourCopy(climber)
 		end
-		writeScoretoFile()
-		writePopulationtoFile()
+	else 
+		lastClimber = ourCopy(climber)
+	end
+	writeScoretoFile()
+	if numGenerations == generationsEvaluated then
+		-- replayBest()
+		if last then
+			start_new_game()
+			evaluateClimber()
+			writePopulationtoFile()
+			last = false
+		end
+		-- echo("weDone")
+	else
 		generationsEvaluated = generationsEvaluated + 1
 		climber = mutateClimber()
+		lastInjury = 0
+		lastScore = 0
 		start_new_game()
 		evaluateClimber()
 	end
@@ -150,7 +191,7 @@ function createRandomClimber()
     	climber[i] = {move = {}, steps = math.random(4), score = 0}
     	for j=1,20 do
     		climber[i].move[j] = math.random(4)
-    		--echo(climber[i].move[j])
+    		---- echo(climber[i].move[j])
     	end
     end 
     return climber
@@ -159,16 +200,17 @@ end
 function initializeEvolution()
 	--create a population and start the game
 	--example move-set {{move = {}, steps = 1, score = 0}}
-	climber = createRandomClimber()
-	--echo(climber[1].move[1])
+	-- climber = createRandomClimber()
+	createClimber("runs/hillclimberPopulation2.txt")
+	---- echo(climber[1].move[1])
 	--free_play()
 	start_new_game()
-	echo("new game started")
-	echo(#climber)
+	-- echo("new game started")
+	-- echo(#climber)
 	evaluateClimber()
 end
 
-add_hook("enter_freeze","echowinner", evaluateClimber)
+add_hook("enter_freeze","-- echowinner", evaluateClimber)
 add_hook("end_game", "end game", endGame)
 
 initializeEvolution()
