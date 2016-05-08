@@ -3,6 +3,7 @@ local evaluatedClimber = {}
 local climber = {}
 local climberIndex = 1
 local oldClimber = {}
+local biggestWinners = {}
 
 
 -- Toribash specifications
@@ -10,7 +11,7 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local numGenerations = 5
+local numGenerations = 500
 local generationsEvaluated = 1
 local maxSteps = 50
 local lastInjury = 0
@@ -19,14 +20,18 @@ local last = true
 
 
 local function writePopulationtoFile()
-	local file = io.open("hillclimberPopulation.txt", "a",1)
-	file:write("moveSet\n")
-	for i=1, #climber do
-		file:write("Steps:" .. climber[i].steps)
-		file:write("\n")
-		for j=1, #climber[i].move do
-			file:write(climber[i].move[j])
+	local file = io.open("hillclimberPopulation.txt", "w",1)
+	--file:write("moveSet\n")
+	echo(#biggestWinners)
+	for k=1, #biggestWinners do
+		file:write("moveSet\n")
+		for i=1, #biggestWinners[k].moveSet do
+			file:write("Steps:" .. biggestWinners[k].moveSet[i].steps)
 			file:write("\n")
+			for j=1, #biggestWinners[k].moveSet[i].move do
+				file:write(biggestWinners[k].moveSet[i].move[j])
+				file:write("\n")
+			end
 		end
 	end
 	file:write("\n")
@@ -159,6 +164,19 @@ function endGame()
 			climber = ourCopy(lastClimber)
 		else 
 			-- echo("keeping climber")
+			if #biggestWinners <= 10 then
+				table.insert(biggestWinners, {moveSet = ourCopy(climber), change = (getScore(climber) - getScore(lastClimber))})
+			else
+				smallestIndex = 1
+				for i=1, #biggestWinners do
+					if biggestWinners[i].change < biggestWinners[smallestIndex].change then
+						smallestIndex = i
+					end
+				end
+				if biggestWinners[smallestIndex].change < (getScore(climber) - getScore(lastClimber)) then
+					biggestWinners[smallestIndex] = {moveSet = ourCopy(climber), change = (getScore(climber) - getScore(lastClimber))}
+				end
+			end
 			lastClimber = ourCopy(climber)
 		end
 	else 
@@ -200,8 +218,8 @@ end
 function initializeEvolution()
 	--create a population and start the game
 	--example move-set {{move = {}, steps = 1, score = 0}}
-	-- climber = createRandomClimber()
-	createClimber("runs/hillclimberPopulation2.txt")
+	--climber = createRandomClimber()
+	createClimber("runs/hillclimberPopulation6.txt")
 	---- echo(climber[1].move[1])
 	--free_play()
 	start_new_game()
