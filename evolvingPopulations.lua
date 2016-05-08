@@ -13,8 +13,8 @@ local game_length = 500
 
 -- Evolution parameters
 local population_size = 50
-local numGenerations = 9
-local generationNum = 0
+local numGenerations = 10
+local generationNum = 1
 local generations_evaluated = 0
 local max_generations = 1
 local maxSteps = 50
@@ -22,6 +22,7 @@ local maxNumOfParents = 4
 local tournamentSize = 2
 local lastInjury = 0
 local lastScore = 0
+local parentSize = 4
 
 
 -- index representing where we are in the population
@@ -58,6 +59,17 @@ function getAverageScore()
 	return total / #evaluatedPopulation
 end
 
+function getMaxScore()
+	maximum = 0
+	for i=1, #evaluatedPopulation do
+		current = evaluatedPopulation[i].finalScore
+		if maximum < current then
+			maximum = current
+		end
+	end
+	return maximum
+end
+
 local function writeScoretoFile()
 	local file = io.open("averageScore.txt", "a",1)
 	echo("Average: "..getAverageScore())
@@ -66,11 +78,19 @@ local function writeScoretoFile()
 	io.close(file)
 end
 
+local function writeMaxScoretoFile()
+	local file = io.open("maxScore.txt", "a",1)
+	echo("Max: "..getMaxScore())
+	file:write(""..getMaxScore())
+	file:write("\n")
+	io.close(file)
+end
+
 local function fillPopulation(filename)
 	local file = io.open(filename, "r",1)
 	population = {}
 	i = 0;
-	j = 0;
+	j = 1;
 	k = 1;
 	for line in file:lines() do
 		if string.match(line, "moveSet") then
@@ -81,11 +101,11 @@ local function fillPopulation(filename)
 			population[i][j] = {move = {}, steps = 0, score = 0}
 		elseif string.match(line,"Steps:") then
 			k = 1;
+			population[i][j] = {move = {}, steps = 0, score = 0}
 			population[i][j].steps = string.match(line,"%d+")
 			j = j + 1;
-			population[i][j] = {move = {}, steps = 0, score = 0}
 		elseif string.match(line, "%d") then
-			population[i][j].move[k] = string.match(line,"%d")
+			population[i][j - 1].move[k] = string.match(line,"%d")
 			-- echo(population[i][j].move[k])
 			k = k + 1;
 		end
@@ -133,7 +153,7 @@ function tournamentSelection()
 	parents = {}
 	-- echo("selecting")
 
-	for i=1, (math.random(maxNumOfParents) + 1) do
+	for i=1, (parentSize) do
 		-- -- echo(i)
 		table.insert(parents, getBest(randomSubset()))
 	end
@@ -214,9 +234,40 @@ function crossoverParents()
 		population[#population] = mutateAnswer(population[#population], 6)
 	end
 	-- -- echo(#population)
-	for i=1, #population do
+	--for i=1, #population do
 		-- echo(#population[i])
+	--end
+end
+
+function crossoverKeepParents()
+	 echo("crossover")
+	for i=1,((population_size - #parents) / 2) do
+		-- -- echo(i)
+		parent1 = ourCopy(parents[math.random(#parents)].moveSet)
+		parent2 = ourCopy(parents[math.random(#parents)].moveSet)
+		-- swap moves
+		crossover(math.random(#parent1), math.random(#parent1))
+		--maybe mutate
+		table.insert(population, parent1)
+		-- for i=1,#parent1 do
+		-- 	table.insert(population[#population],parent1[i])
+		-- end
+		population[#population] = mutateAnswer(population[#population], 6)
+		table.insert(population, parent2)
+		-- for i=1,#parent2 do
+		-- 	table.insert(population[#population],parent2[i])
+		-- end
+		population[#population] = mutateAnswer(population[#population], 6)
 	end
+	
+	for i = 1, #parents do
+		table.insert(population, ourCopy(parents[i].moveSet))
+	end
+	echo("adding parents")
+	-- -- echo(#population)
+	--for i=1, #population do
+		-- echo(#population[i])
+	--end
 end
 
 
@@ -226,6 +277,8 @@ function evolvePopulation()
 	tournamentSelection()
 	-- Crossover sections of the parents with two point crossover
 	crossoverParents()
+	--crossoverKeepParents()
+	echo("popsize"..#population)
 	-- Create the next generation by mutating some joints
 	evaluatedPopulation = {}
 	--chromosome = {}
@@ -382,12 +435,14 @@ function endGame()
 
 		-- Evolve the population
 		if generationNum == numGenerations then
+			writeMaxScoretoFile()
 			writeScoretoFile()
 			writePopulationtoFile()
 			replayBest()
 		else
 			echo("generation : " .. generationNum)
 			generationNum = generationNum + 1
+			writeMaxScoretoFile()
 			writeScoretoFile()
 			evolvePopulation()
 		end
