@@ -59,10 +59,29 @@ function getAverageScore()
 	return total / #evaluatedPopulation
 end
 
+function getMaxScore()
+	maximum = 0
+	for i=1, #evaluatedPopulation do
+		current = evaluatedPopulation[i].finalScore
+		if maximum < current then
+			maximum = current
+		end
+	end
+	return maximum
+end
+
 local function writeScoretoFile()
 	local file = io.open("averageScore.txt", "a",1)
 	echo("Average: "..getAverageScore())
 	file:write(""..getAverageScore())
+	file:write("\n")
+	io.close(file)
+end
+
+local function writeMaxScoretoFile()
+	local file = io.open("maxScore.txt", "a",1)
+	echo("Max: "..getMaxScore())
+	file:write(""..getMaxScore())
 	file:write("\n")
 	io.close(file)
 end
@@ -416,12 +435,14 @@ function endGame()
 
 		-- Evolve the population
 		if generationNum == numGenerations then
+			writeMaxScoretoFile()
 			writeScoretoFile()
 			writePopulationtoFile()
 			replayBest()
 		else
 			echo("generation : " .. generationNum)
 			generationNum = generationNum + 1
+			writeMaxScoretoFile()
 			writeScoretoFile()
 			evolvePopulation()
 		end
