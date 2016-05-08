@@ -12,8 +12,8 @@ local frameLength = 10
 local game_length = 500
 
 -- Evolution parameters
-local population_size = 2
-local numGenerations = 1
+local population_size = 50
+local numGenerations = 9
 local generationNum = 0
 local generations_evaluated = 0
 local max_generations = 1
@@ -73,19 +73,19 @@ local function fillPopulation(filename)
 	j = 0;
 	k = 1;
 	for line in file:lines() do
-		if string.find(line, "moveSet") then
+		if string.match(line, "moveSet") then
 			j = 1;
 			k = 1;
 			i = i + 1;
 			population[i] = {}
 			population[i][j] = {move = {}, steps = 0, score = 0}
-		elseif string.find(line,"Steps:") then
+		elseif string.match(line,"Steps:") then
 			k = 1;
-			population[i][j].steps = string.find(line,"%d+")
+			population[i][j].steps = string.match(line,"%d+")
 			j = j + 1;
 			population[i][j] = {move = {}, steps = 0, score = 0}
-		elseif string.find(line, "%d") then
-			population[i][j].move[k] = string.find(line,"%d")
+		elseif string.match(line, "%d") then
+			population[i][j].move[k] = string.match(line,"%d")
 			-- echo(population[i][j].move[k])
 			k = k + 1;
 		end
@@ -364,12 +364,16 @@ function endGame()
 		-- the game ended and we want to move ahead in the world
 
 		chromosome = {}
+		lastScore = 0;
+		lastInjury = 0;
 		start_new_game()
 		evaluatePopulation()
 	else
 		-- echo("we done")
 
 		-- Score the population
+		lastScore = 0;
+		lastInjury = 0;
 		scorePopulation()
 		-- -- echo("finished scored population")
 
@@ -382,6 +386,7 @@ function endGame()
 			writePopulationtoFile()
 			replayBest()
 		else
+			echo("generation : " .. generationNum)
 			generationNum = generationNum + 1
 			writeScoretoFile()
 			evolvePopulation()
