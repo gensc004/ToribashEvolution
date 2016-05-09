@@ -71,7 +71,7 @@ local function fillPopulation(filename)
 	local file = io.open(filename, "r",1)
 	population = {}
 	i = 0;
-	j = 0;
+	j = 1;
 	k = 1;
 	for line in file:lines() do
 		if string.match(line, "moveSet") then
@@ -82,16 +82,16 @@ local function fillPopulation(filename)
 			population[i][j] = {move = {}, steps = 0, score = 0}
 		elseif string.match(line,"Steps:") then
 			k = 1;
+			population[i][j] = {move = {}, steps = 0, score = 0}
 			population[i][j].steps = string.match(line,"%d+")
 			j = j + 1;
-			population[i][j] = {move = {}, steps = 0, score = 0}
 		elseif string.match(line, "%d") then
-			population[i][j].move[k] = string.match(line,"%d")
-			-- --echo(population[i][j].move[k])
+			population[i][j - 1].move[k] = string.match(line,"%d")
+			-- echo(population[i][j].move[k])
 			k = k + 1;
 		end
 	end
-	-- -- --echo("size" .. #population)
+	-- -- echo("size" .. #population)
 	io.close(file)
 end
 
