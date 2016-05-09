@@ -13,13 +13,13 @@ local game_length = 500
 
 -- Evolution parameters
 local population_size = 50
-local numGenerations = 10
+local numGenerations = 100
 local generationNum = 1
 local generations_evaluated = 0
 local max_generations = 1
 local maxSteps = 50
 local maxNumOfParents = 4
-local tournamentSize = 2
+local tournamentSize = 10
 local lastInjury = 0
 local lastScore = 0
 local parentSize = 4
