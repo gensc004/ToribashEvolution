@@ -539,7 +539,8 @@ function endGame()
         start_new_game()
         evaluatePopulation()
     else
-        -- Full generation evaluated
+        -- Full generation evaluated; clear any stale moves from an early game end (e.g. KO)
+        chromosome = {}
         lastScore  = 0
         lastInjury = 0
         scorePopulation()
